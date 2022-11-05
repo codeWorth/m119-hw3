@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>IMU Orientation</title>
+		<style>
+			body { margin: 0; }
+		</style>
+	</head>
+	<body>
+		<script src="three.js"></script>
+		<script>
+            const webSocket = new WebSocket("ws://localhost:3001");
+            let data = undefined;
+            webSocket.onopen = (event) => {
+                console.log(event);
+            }
+
+            webSocket.onmessage = (message) => {
+                data = JSON.parse(message.data);
+            }
+
+			const scene = new THREE.Scene();
+			const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+
+			const renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+
+            const material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+
+            const va = new THREE.Vector3( 0, 0, 1 );
+            const vb = new THREE.Vector3( 0, 0, 0 );
+            const points = [];
+            points.push( va );
+            points.push( new THREE.Vector3( 0, 0, 0 ) );
+            points.push( vb );
+
+            const geometry = new THREE.BufferGeometry().setFromPoints( points );
+            const line = new THREE.Line( geometry, material );
+            scene.add(line);
+        
+			camera.position.z = 5;
+
+			function animate() {
+				requestAnimationFrame( animate );
+
+                if (data !== undefined) {
+                    va.z = data.forward_x;
+                    va.x = data.forward_y;
+                    va.y = data.forward_z;
+                    vb.z = data.up_x;
+                    vb.x = data.up_y;
+                    vb.y = data.up_z;
+                    geometry.setFromPoints(points);
+                }
+
+				renderer.render( scene, camera );
+			};
+
+			animate();
+		</script>
+	</body>
+</html>
